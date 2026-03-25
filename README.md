@@ -1,6 +1,7 @@
 # rockpaper
-Vibe coding
+### Vibe coding practice
 
+using Chat GPT
 Prompt
 ```
 ## 태스크
