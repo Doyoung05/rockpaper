@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가위바위보 게임</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  background: #f5f5f5;
+  transition: 0.3s;
+}
+.dark {
+  background: #121212;
+  color: white;
+}
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+}
+.top-bar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+#result {
+  font-size: 24px;
+  margin: 20px;
+}
+#score {
+  font-size: 20px;
+}
+canvas {
+  max-width: 400px;
+  margin: auto;
+}
+.win-animation {
+  animation: flash 0.5s infinite alternate;
+}
+@keyframes flash {
+  from {color: gold;}
+  to {color: red;}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <button onclick="toggleDarkMode()">다크모드</button>
+  <button onclick="toggleStats()">승률표</button>
+</div>
+
+<h1>가위 ✌️ 바위 ✊ 보 ✋</h1>
+
+<div>
+  <button onclick="play('가위')">가위</button>
+  <button onclick="play('바위')">바위</button>
+  <button onclick="play('보')">보</button>
+</div>
+
+<div id="result"></div>
+<div id="score">플레이어: 0 | 컴퓨터: 0</div>
+
+<canvas id="chart"></canvas>
+
+<table id="statsTable" border="1" style="margin:auto; display:none;">
+  <tr><th>판</th><th>결과</th></tr>
+</table>
+
+<script>
+let playerScore = 0;
+let computerScore = 0;
+let gameOver = false;
+let history = [];
+
+const ctx = document.getElementById('chart').getContext('2d');
+let chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{ label: '승률 흐름', data: [] }]
+  }
+});
+
+function play(player) {
+  if (gameOver) return;
+
+  const choices = ['가위','바위','보'];
+  const computer = choices[Math.floor(Math.random()*3)];
+
+  let result = '';
+
+  if (player === computer) {
+    result = '무승부';
+  } else if (
+    (player === '가위' && computer === '보') ||
+    (player === '바위' && computer === '가위') ||
+    (player === '보' && computer === '바위')
+  ) {
+    result = '승리';
+    playerScore++;
+  } else {
+    result = '패배';
+    computerScore++;
+  }
+
+  document.getElementById('result').innerText = `당신: ${player} | 컴퓨터: ${computer} → ${result}`;
+  document.getElementById('score').innerText = `플레이어: ${playerScore} | 컴퓨터: ${computerScore}`;
+
+  history.push(result);
+  updateStats();
+  updateChart();
+
+  if (playerScore === 3 || computerScore === 3) {
+    gameOver = true;
+    if (playerScore === 3) {
+      celebrate();
+    } else {
+      alert('아쉽네요 😢 다시 도전해보세요!');
+    }
+    resetGame();
+  }
+}
+
+function celebrate() {
+  const el = document.getElementById('result');
+  el.innerText = '🎉 축하합니다! 승리했습니다! 🎉';
+  el.classList.add('win-animation');
+}
+
+function resetGame() {
+  setTimeout(() => {
+    playerScore = 0;
+    computerScore = 0;
+    history = [];
+    gameOver = false;
+    document.getElementById('result').classList.remove('win-animation');
+    document.getElementById('result').innerText = '';
+    document.getElementById('score').innerText = '플레이어: 0 | 컴퓨터: 0';
+    document.getElementById('statsTable').innerHTML = '<tr><th>판</th><th>결과</th></tr>';
+    chart.data.labels = [];
+    chart.data.datasets[0].data = [];
+    chart.update();
+  }, 2000);
+}
+
+function toggleDarkMode() {
+  document.body.classList.toggle('dark');
+}
+
+function toggleStats() {
+  const table = document.getElementById('statsTable');
+  table.style.display = table.style.display === 'none' ? 'table' : 'none';
+}
+
+function updateStats() {
+  const table = document.getElementById('statsTable');
+  const row = table.insertRow();
+  row.insertCell(0).innerText = history.length;
+  row.insertCell(1).innerText = history[history.length - 1];
+}
+
+function updateChart() {
+  const wins = history.filter(h => h === '승리').length;
+  const rate = (wins / history.length * 100).toFixed(1);
+
+  chart.data.labels.push(history.length);
+  chart.data.datasets[0].data.push(rate);
+  chart.update();
+}
+</script>
+
+</body>
+</html>
